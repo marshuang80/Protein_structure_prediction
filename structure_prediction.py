@@ -22,6 +22,9 @@ num_input_variables = 22
 num_filter = 16
 num_rnn_cells = 256
 sequence_length = 700
+hidden_neurons_1 = 512
+hidden_neurons_2 = 256
+hidden_neurons_3= 256
 num_output_class = 9
 valid_ratio = 1
 filter_sizes = [3,5,7]
@@ -236,7 +239,7 @@ def concat_layer_2(conv_outputs, conv_features_outputs, concat_aa, concat_featur
 
     # First fully connected layer with 200 neurons
     reshape_layer_1 = tf.reshape(concat_input, [batch_size * sequence_length, 2*(3*num_filter+3*num_filter+num_input_variables)])
-    layer_1 = tf.layers.dense(reshape_layer_1, 200, activation=tf.nn.relu, use_bias=True)
+    layer_1 = tf.layers.dense(reshape_layer_1, hidden_neurons_1, activation=tf.nn.relu, use_bias=True)
     concat_input =  tf.layers.batch_normalization(layer_1)
 
     return concat_input
@@ -280,10 +283,10 @@ def dense_layers(rnn_outputs_dropout):
                                different categories
     '''
     # Fully connected layer 1
-    dense_layer = tf.layers.dense(rnn_outputs_dropout, 200, activation=tf.nn.relu, use_bias=True)
+    dense_layer = tf.layers.dense(rnn_outputs_dropout, hidden_neurons_2, activation=tf.nn.relu, use_bias=True)
 
     # Fully connected layer 2
-    dense_layer1 = tf.layers.dense(dense_layer, 200, activation=tf.nn.relu, use_bias=True)
+    dense_layer1 = tf.layers.dense(dense_layer, hidden_neurons_3, activation=tf.nn.relu, use_bias=True)
 
     # Last fully connected layer
     dense_layer_2 = tf.layers.dense(dense_layer1, num_output_class,
@@ -319,24 +322,13 @@ def optimization(dense_output, y_input, alpha):
     return optimizer,loss
 
 
-def get_result(dense_output):
-    '''Get predicted outputs and accuracy
-    Args:
-        dense_output (tensor): The output from the fully connected layer
-
-    Returns:
-        predictions (list): list of predicted outputs
-    '''
-    predictions = tf.argmax(dense_output,2)
-
-    return predictions
-
-
 def get_accuracy(pred,y_input):
     '''Calcuate the prediction accuracy on the non-padded part of the sequence
+
     Args:
         pred (tensor): the predicted strucutres from the neural network model
         y_input (tensor): the original labels of structures of input data
+
     Returns:
         accuracy (float): the accuracy of the predictions
         seq_lens (list): the sequence lengths of each input sequence
@@ -346,19 +338,16 @@ def get_accuracy(pred,y_input):
 
     # Find the last aa in the squence
     last_aa = [(l == 8).sum() for l in labels]
-    count = 0
+    accs = []
 
     # Calculate accuracy based on actual amino acid sequence length
     for p,l,stop in zip(pred, labels, last_aa):
-        count += np.sum(np.equal(p[:-stop],l[:-stop]))/(sequence_length-stop)
-
-    # Average the accuracies
-    accuracy = count/batch_size
+        accs.append(np.sum(np.equal(p[:-stop],l[:-stop]))/(sequence_length-stop))
 
     # Get lisit of sequence lengths
     seq_lens= [700-l for l in last_aa]
 
-    return accuracy,seq_lens
+    return accs,seq_lens
 
 
 if __name__ == "__main__":
@@ -402,8 +391,10 @@ if __name__ == "__main__":
             losses.append(cost)
             pred = tf.argmax(dense_out,2).eval()
             acc, _ = get_accuracy(pred, y_train)
-            accs.append(acc)
-            print(acc)
+            accs.append(sum(acc)/batch_size)
+            print(sum(acc)/batch_size)
+
+            # Print predictions every 5 epochs
             if i % 5 == 0:
                 print(pred[0])
                 print(np.argmax(y_train,2)[0])
