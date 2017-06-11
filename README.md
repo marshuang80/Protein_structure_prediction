@@ -1,1 +1,1 @@
-# protein_structure_prediction
+# Using Covolutional and Recurrent Neural Network to Predict Protein Secondary Structures
