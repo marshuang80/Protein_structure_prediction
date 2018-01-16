@@ -6,6 +6,10 @@
 |:------------:|-------------|-------------------------|
 |    73.45%    |    69.49%    |          70.00%         |
 
+## Dataset
+
+Please find the protein dataset [here](http://www.princeton.edu/~jzthree/datasets/ICML2014/) 
+
 ## Network Architecture
 
 ![png](./network_topology_diagram.png)
