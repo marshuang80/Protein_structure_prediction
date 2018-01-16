@@ -5,7 +5,7 @@ structure_prediction.py: The neural network used to predict protein secondary
 
 Authorship information:
     __author__ = "Mars Huang"
-    __email__ = "marshuang80@gmai.com:
+    __email__ = "marshuang80@gmail.com:
     __status__ = "debug"
 '''
 # Imports
